@@ -8,7 +8,7 @@ use super::{
 };
 use crate::{
     common::{concurrent::Weigher, time::Clock, HousekeeperConfig},
-    notification::AsyncEvictionListener,
+    notification::{AsyncEvictionListener, PostRemovalObserver},
     ops::compute::{self, CompResult},
     policy::{EvictionPolicy, ExpirationPolicy},
     Entry, Policy, PredicateError,
@@ -789,6 +789,7 @@ where
             None,
             EvictionPolicy::default(),
             None,
+            None,
             ExpirationPolicy::default(),
             HousekeeperConfig::default(),
             false,
@@ -821,6 +822,7 @@ where
         weigher: Option<Weigher<K, V>>,
         eviction_policy: EvictionPolicy,
         eviction_listener: Option<AsyncEvictionListener<K, V>>,
+        post_removal_observer: Option<PostRemovalObserver<K, V>>,
         expiration_policy: ExpirationPolicy<K, V>,
         housekeeper_config: HousekeeperConfig,
         invalidator_enabled: bool,
@@ -835,6 +837,7 @@ where
                 weigher,
                 eviction_policy,
                 eviction_listener,
+                post_removal_observer,
                 expiration_policy,
                 housekeeper_config,
                 invalidator_enabled,
@@ -1982,6 +1985,10 @@ where
                 // will save the future and the op to the interrupted_op_ch channel,
                 // so that we can resume/retry later.
                 let mut cancel_guard = CancelGuard::new(&self.base.interrupted_op_ch_snd, now);
+
+                if self.base.is_removal_observer_enabled() {
+                    self.base.observe_invalidate(&kv.key, &kv.entry);
+                }
 
                 if self.base.is_removal_notifier_enabled() {
                     let future = self
@@ -5299,6 +5306,31 @@ mod tests {
         cache.run_pending_tasks().await;
 
         verify_notification_vec(&cache, actual, &expected).await;
+    }
+
+    #[tokio::test]
+    async fn recover_from_panicking_post_removal_observer() {
+        #[cfg(feature = "logging")]
+        let _ = env_logger::builder().is_test(true).try_init();
+
+        let call_count = Arc::new(AtomicU32::new(0));
+        let observed = Arc::clone(&call_count);
+        let cache = Cache::builder()
+            .name("My Future Cache")
+            .post_removal_observer(move |_key, _value, _cause| {
+                observed.fetch_add(1, Ordering::AcqRel);
+                panic!("Panic now!");
+            })
+            .build();
+
+        cache.insert("alice", "a0").await;
+        cache.insert("alice", "a1").await;
+        cache.insert("alice", "a2").await;
+        cache.invalidate(&"alice").await;
+        cache.run_pending_tasks().await;
+
+        assert_eq!(call_count.load(Ordering::Acquire), 1);
+        assert!(!cache.contains_key(&"alice"));
     }
 
     #[tokio::test]
