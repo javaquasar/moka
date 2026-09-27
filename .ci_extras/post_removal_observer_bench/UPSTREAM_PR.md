@@ -56,11 +56,17 @@ merge.
 - [x] Rust 1.71.1 future test suite
 - [x] Package construction
 - [x] Reproducible raw allocation evidence with source/environment metadata
-- [ ] Fork GitHub Actions matrix and cross-compile jobs
+- [x] Fork GitHub Actions matrix and cross-compile jobs
 - [ ] Maintainer agreement on the public contract
 
 ## Notes for reviewers
 
 The MSRV verification needed two additional temporary transitive pins (`encoding_rs 0.8.35` and
 `actix-macros 0.2.4`) beyond Moka's current pin script because newer releases now require edition
-2024/Rust 1.88. Those pins are not part of this change.
+2024/Rust 1.88. They are isolated in a prep-only tooling commit and should be submitted separately
+or omitted from the observer PR.
+
+The fork's Miri workflow has one unrelated baseline failure in the existing sync-only
+`timer_wheel_panic_test`: current Miri rejects a `parking_lot_core` futex syscall argument. All Miri
+steps before that test passed, and the failing stack contains neither `future::Cache` nor observer
+code.
