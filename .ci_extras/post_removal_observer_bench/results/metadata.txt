@@ -1,0 +1,14 @@
+source_revision=91a31104e4b5c099b32ea6b9cf1abfa0964b4eda
+source_dirty=false
+rustc=rustc 1.94.0 (4a4ef493e 2026-03-02)
+binary: rustc
+commit-hash: 4a4ef493e3a1488c6e321570238084b38948f6db
+commit-date: 2026-03-02
+host: x86_64-pc-windows-msvc
+release: 1.94.0
+LLVM version: 21.1.8
+
+os=Microsoft Windows NT 10.0.26200.0
+processor=Intel64 Family 6 Model 189 Stepping 1, GenuineIntel
+operations=20000
+repetitions=5

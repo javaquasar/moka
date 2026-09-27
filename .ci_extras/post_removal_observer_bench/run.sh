@@ -14,7 +14,7 @@ cargo build --release --manifest-path "$bench_root/Cargo.toml"
 binary="$bench_root/target/release/moka-post-removal-observer-bench"
 csv="$results/raw.csv"
 metadata="$results/metadata.txt"
-printf '%s\n' 'repetition,mode,operation,operations,gross_bytes,allocations,bytes_per_operation,allocations_per_operation' >"$csv"
+printf '%s\n' 'repetition_index,mode,operation,operations,gross_bytes,allocations,bytes_per_operation,allocations_per_operation' >"$csv"
 
 configurations='off insert
 listener insert

@@ -28,14 +28,21 @@ and does not promise completion of work published outside Moka. The prototype de
 the prototype calls the observer before the eviction listener. A panic is caught and disables later
 observer calls while leaving the cache usable.
 
-## Evidence available
+## Prototype evidence
 
-- A standalone listener-off/listener/observer gross-allocation benchmark.
-- Native tests for all removal causes, old-value replacement, observer/listener order, panic
-  containment, and the observer-disabled path.
-- Full all-feature tests, Clippy with warnings denied, MSRV 1.71.1, package verification, and
-  supported-target checks.
+- Five independent release processes per mode/operation pair, with rotated order and raw CSV. Against
+  notification-off, observer median allocation count changed by `0.00%` for insert and `+0.03%` for
+  explicit remove. A no-op listener changed it by `+46.73%` and `+784.63%`, respectively.
+- Observer median gross allocated bytes remained within `+0.03%` for insert and `+0.01%` for remove
+  of notification-off. The no-op listener changed those medians by `+121.13%` and `+29.61%`.
+- Native tests cover all removal causes, old-value replacement, observer/listener order, panic
+  containment, and proof that observer-only caches do not allocate the listener key-lock map.
+- All-feature tests, doctests, strict Clippy, feature checks, packaging, and Rust 1.71.1 future tests
+  pass locally. Cross-platform CI remains the final pre-merge authority.
 - A downstream bounded-queue consumer with duplicate-tolerant, version-conditional cleanup.
+
+The allocation benchmark classifies ownership and does not claim an elapsed-time speedup. Raw data,
+environment metadata, hashes, and exact commands are included with the prototype branch.
 
 ## Questions
 

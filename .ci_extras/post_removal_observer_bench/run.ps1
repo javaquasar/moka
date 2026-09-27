@@ -20,7 +20,7 @@ $binary = Join-Path $benchRoot "target/release/moka-post-removal-observer-bench.
 $csv = Join-Path $OutputDirectory "raw.csv"
 $metadata = Join-Path $OutputDirectory "metadata.txt"
 
-"repetition,mode,operation,operations,gross_bytes,allocations,bytes_per_operation,allocations_per_operation" | Set-Content $csv
+"repetition_index,mode,operation,operations,gross_bytes,allocations,bytes_per_operation,allocations_per_operation" | Set-Content $csv
 $configurations = @(
     @("off", "insert"),
     @("listener", "insert"),
