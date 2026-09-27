@@ -7,6 +7,8 @@ param(
 $ErrorActionPreference = "Stop"
 $benchRoot = $PSScriptRoot
 $repoRoot = (Resolve-Path (Join-Path $benchRoot "../..")).Path
+$sourceRevision = git -C $repoRoot rev-parse HEAD
+$sourceDirty = -not [string]::IsNullOrWhiteSpace((git -C $repoRoot status --porcelain))
 if ([string]::IsNullOrWhiteSpace($OutputDirectory)) {
     $OutputDirectory = Join-Path $benchRoot "results"
 }
@@ -37,8 +39,8 @@ for ($repetition = 1; $repetition -le $Repetitions; $repetition++) {
 }
 
 @(
-    "source_revision=$(git -C $repoRoot rev-parse HEAD)",
-    "source_dirty=$(-not [string]::IsNullOrWhiteSpace((git -C $repoRoot status --porcelain)))",
+    "source_revision=$sourceRevision",
+    "source_dirty=$sourceDirty",
     "rustc=$(rustc --version --verbose | Out-String)",
     "os=$([System.Environment]::OSVersion.VersionString)",
     "processor=$env:PROCESSOR_IDENTIFIER",

@@ -5,6 +5,8 @@ operations="${1:-20000}"
 repetitions="${2:-5}"
 bench_root=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
 repo_root=$(CDPATH= cd -- "$bench_root/../.." && pwd)
+source_revision=$(git -C "$repo_root" rev-parse HEAD)
+if [ -n "$(git -C "$repo_root" status --porcelain)" ]; then source_dirty=true; else source_dirty=false; fi
 results="$bench_root/results"
 mkdir -p "$results"
 
@@ -33,8 +35,8 @@ while [ "$repetition" -le "$repetitions" ]; do
 done
 
 {
-    printf 'source_revision=%s\n' "$(git -C "$repo_root" rev-parse HEAD)"
-    if [ -n "$(git -C "$repo_root" status --porcelain)" ]; then printf 'source_dirty=true\n'; else printf 'source_dirty=false\n'; fi
+    printf 'source_revision=%s\n' "$source_revision"
+    printf 'source_dirty=%s\n' "$source_dirty"
     rustc --version --verbose
     uname -a
     printf 'operations=%s\nrepetitions=%s\n' "$operations" "$repetitions"
