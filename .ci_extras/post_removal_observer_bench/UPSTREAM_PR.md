@@ -47,8 +47,13 @@ merge.
 
 - [x] All-feature unit, integration, and doc tests
 - [x] Native tests for `Explicit`, `Replaced`, `Expired`, and `Size`
-- [x] Old-value replacement and observer-before-listener ordering
-- [x] Panic containment and observer disablement
+- [x] Direct remove, single/all/predicate invalidation, TTL, TTI, and weighted eviction
+- [x] Old-value replacement, expired-value replacement/removal, and Entry/compute paths
+- [x] Observer-before-listener ordering across replacement, explicit removal, and expiration
+- [x] Panic containment, observer disablement, concurrent in-flight callbacks, and listener survival
+- [x] Cancellation does not duplicate observer delivery
+- [x] Concurrent callback execution and bounded nonblocking queue overflow
+- [x] Default and custom-hasher builders
 - [x] Proof that observer-only does not enable listener key locks
 - [x] Strict Clippy across all features and targets
 - [x] Rustfmt and whitespace checks

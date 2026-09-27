@@ -15,8 +15,16 @@
 - `cargo check --all-features`
 - `cargo check --locked --no-default-features --features future`
 - `cargo check --locked --no-default-features --features sync`
-- `cargo test --all-features`: 167 passed, 6 intentionally ignored; all integration tests passed.
+- `cargo test --all-features`: 181 passed, 6 intentionally ignored; all integration tests passed.
 - Doc tests from the all-feature run: 67 passed, 2 intentionally ignored.
+- `cargo test --locked --no-default-features --features future`: 117 passed, 2 intentionally
+  ignored; all future integration tests and 30 doc tests passed.
+- Focused observer matrix: 18 passed. It covers all four removal causes, explicit `remove`,
+  `invalidate`, `invalidate_all`, predicate invalidation, TTL and TTI expiry, weighted capacity,
+  replacement of an already-expired value, the owned and borrowed Entry/compute paths, custom
+  hashers, observer/listener ordering, cancellation, concurrent invocation, concurrent panic,
+  panic isolation, listener survival, bounded nonblocking queue overflow, and the absence of
+  listener-only key locks.
 - `cargo clippy --lib --tests --all-features --all-targets -- -D warnings`
 - `cargo run --example post_removal_observer_async --features future`
 - `cargo check --manifest-path .ci_extras/post_removal_observer_bench/Cargo.toml`
@@ -24,9 +32,9 @@
 - Rust 1.71.1 `cargo test --features future`: 103 passed, 2 intentionally ignored; integration
   tests and 30 doc tests passed.
 
-The MSRV run used Moka's `.ci_extras/pin-crate-vers-msrv.sh` dependency choices plus temporary pins
+The earlier MSRV run used Moka's `.ci_extras/pin-crate-vers-msrv.sh` dependency choices plus pins
 for `encoding_rs 0.8.35` and `actix-macros 0.2.4`. Current newer releases of those transitive
-dependencies no longer parse/build on 1.71.1. No MSRV pin was committed to this branch.
+dependencies no longer parse/build on 1.71.1.
 
 Fork CI reproduced this pin drift before compiling Moka. The missing pins were added as a separate
 prep-only tooling commit. That commit should be proposed separately or excluded when the observer
