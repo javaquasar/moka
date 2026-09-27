@@ -27,6 +27,10 @@ The MSRV run used Moka's `.ci_extras/pin-crate-vers-msrv.sh` dependency choices 
 for `encoding_rs 0.8.35` and `actix-macros 0.2.4`. Current newer releases of those transitive
 dependencies no longer parse/build on 1.71.1. No MSRV pin was committed to this branch.
 
+This pin drift is intentionally documented rather than folded into the observer change. If the
+fork CI reproduces it, the orchestration fix should be proposed separately so the observer PR stays
+focused.
+
 ## Expected or baseline conditions
 
 - `cargo check --no-default-features` fails by design because Moka requires either `sync` or
@@ -35,7 +39,8 @@ dependencies no longer parse/build on 1.71.1. No MSRV pin was committed to this 
   rejects the existing MIT/Apache dependency graph. This is not caused by the observer patch and is
   not an upstream CI check.
 - Linux and cross-target builds are delegated to the fork's unchanged upstream GitHub Actions
-  workflows after the prep branch is pushed.
+  workflows. GitHub initially registered them as `disabled_fork`; they were explicitly enabled
+  before the validation-triggering push.
 
 ## Evidence
 
