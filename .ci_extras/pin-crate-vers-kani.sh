@@ -32,3 +32,8 @@ cargo update -p trybuild --precise 1.0.105
 cargo update -p url --precise 2.5.2
 # `indexmap` v2.13.0+ is edition 2024. Pin to the last edition-2021 release.
 cargo update -p indexmap --precise 2.11.4
+# `encoding_rs` v0.8.42 and `actix-macros` v0.2.5 use edition 2024. They are
+# transitive dev dependencies, but `cargo-kani` still parses their manifests
+# while collecting metadata with its bundled pre-1.85 Cargo.
+cargo update -p encoding_rs --precise 0.8.35
+cargo update -p actix-macros --precise 0.2.4

@@ -27,9 +27,9 @@ The MSRV run used Moka's `.ci_extras/pin-crate-vers-msrv.sh` dependency choices 
 for `encoding_rs 0.8.35` and `actix-macros 0.2.4`. Current newer releases of those transitive
 dependencies no longer parse/build on 1.71.1. No MSRV pin was committed to this branch.
 
-This pin drift is intentionally documented rather than folded into the observer change. If the
-fork CI reproduces it, the orchestration fix should be proposed separately so the observer PR stays
-focused.
+Fork CI reproduced this pin drift before compiling Moka. The missing pins were added as a separate
+prep-only tooling commit. That commit should be proposed separately or excluded when the observer
+PR branch is cut so the API review stays focused.
 
 ## Expected or baseline conditions
 
