@@ -1,0 +1,9 @@
+[package]
+name = "moka-post-removal-observer-bench"
+version = "0.0.0"
+edition = "2021"
+publish = false
+
+[dependencies]
+moka = { path = "../..", features = ["future"] }
+tokio = { version = "1.19", features = ["macros", "rt"] }

@@ -8,7 +8,7 @@ use super::{
 };
 use crate::{
     common::{concurrent::Weigher, time::Clock, HousekeeperConfig},
-    notification::AsyncEvictionListener,
+    notification::{AsyncEvictionListener, PostRemovalObserver},
     ops::compute::{self, CompResult},
     policy::{EvictionPolicy, ExpirationPolicy},
     Entry, Policy, PredicateError,
@@ -789,6 +789,7 @@ where
             None,
             EvictionPolicy::default(),
             None,
+            None,
             ExpirationPolicy::default(),
             HousekeeperConfig::default(),
             false,
@@ -821,6 +822,7 @@ where
         weigher: Option<Weigher<K, V>>,
         eviction_policy: EvictionPolicy,
         eviction_listener: Option<AsyncEvictionListener<K, V>>,
+        post_removal_observer: Option<PostRemovalObserver<K, V>>,
         expiration_policy: ExpirationPolicy<K, V>,
         housekeeper_config: HousekeeperConfig,
         invalidator_enabled: bool,
@@ -835,6 +837,7 @@ where
                 weigher,
                 eviction_policy,
                 eviction_listener,
+                post_removal_observer,
                 expiration_policy,
                 housekeeper_config,
                 invalidator_enabled,
@@ -1983,6 +1986,10 @@ where
                 // so that we can resume/retry later.
                 let mut cancel_guard = CancelGuard::new(&self.base.interrupted_op_ch_snd, now);
 
+                if self.base.is_removal_observer_enabled() {
+                    self.base.observe_invalidate(&kv.key, &kv.entry);
+                }
+
                 if self.base.is_removal_notifier_enabled() {
                     let future = self
                         .base
@@ -2069,6 +2076,10 @@ where
         self.base.key_locks_map_is_empty()
     }
 
+    fn has_key_locks(&self) -> bool {
+        self.base.has_key_locks()
+    }
+
     fn run_pending_tasks_initiation_count(&self) -> usize {
         self.base
             .housekeeper
@@ -2112,7 +2123,7 @@ mod tests {
         convert::Infallible,
         sync::{
             atomic::{AtomicU32, AtomicU8, Ordering},
-            Arc,
+            Arc, Mutex as StdMutex,
         },
         time::{Duration, Instant as StdInstant},
         vec,
@@ -5299,6 +5310,106 @@ mod tests {
         cache.run_pending_tasks().await;
 
         verify_notification_vec(&cache, actual, &expected).await;
+    }
+
+    #[tokio::test]
+    async fn post_removal_observer_reports_all_removal_causes() {
+        let actual = Arc::new(StdMutex::new(Vec::new()));
+        let observed = Arc::clone(&actual);
+        let (clock, mock) = Clock::mock();
+        let mut cache = Cache::builder()
+            .max_capacity(3)
+            .time_to_live(Duration::from_secs(10))
+            .clock(clock)
+            .post_removal_observer(move |key, value, cause| {
+                observed.lock().unwrap().push((key, value, cause));
+            })
+            .build();
+        cache.reconfigure_for_testing().await;
+        let cache = cache;
+
+        cache.insert('a', "alice").await;
+        cache.invalidate(&'a').await;
+
+        cache.insert('b', "bob").await;
+        cache.insert('c', "cathy").await;
+        cache.insert('d', "david").await;
+        cache.run_pending_tasks().await;
+
+        // This candidate is rejected by the size policy.
+        cache.insert('e', "emily").await;
+        cache.run_pending_tasks().await;
+
+        cache.insert('d', "dennis").await;
+        cache.run_pending_tasks().await;
+
+        mock.increment(Duration::from_secs(10));
+        assert_eq!(cache.get(&'d').await, None);
+        cache.run_pending_tasks().await;
+
+        let actual = actual.lock().unwrap();
+        assert!(actual.contains(&(Arc::new('a'), "alice", RemovalCause::Explicit)));
+        assert!(actual.contains(&(Arc::new('e'), "emily", RemovalCause::Size)));
+        assert!(actual.contains(&(Arc::new('d'), "david", RemovalCause::Replaced)));
+        assert!(actual.contains(&(Arc::new('d'), "dennis", RemovalCause::Expired)));
+    }
+
+    #[tokio::test]
+    async fn post_removal_observer_precedes_eviction_listener() {
+        let calls = Arc::new(StdMutex::new(Vec::new()));
+        let observer_calls = Arc::clone(&calls);
+        let listener_calls = Arc::clone(&calls);
+        let cache = Cache::builder()
+            .post_removal_observer(move |_, _, _| {
+                observer_calls.lock().unwrap().push("observer");
+            })
+            .eviction_listener(move |_, _, _| {
+                listener_calls.lock().unwrap().push("listener");
+            })
+            .build();
+
+        cache.insert("key", "old").await;
+        cache.insert("key", "new").await;
+
+        assert_eq!(*calls.lock().unwrap(), ["observer", "listener"]);
+    }
+
+    #[test]
+    fn post_removal_observer_does_not_enable_listener_key_locks() {
+        let observer_cache = Cache::<u64, u64>::builder()
+            .post_removal_observer(|_, _, _| {})
+            .build();
+        let listener_cache = Cache::<u64, u64>::builder()
+            .eviction_listener(|_, _, _| {})
+            .build();
+
+        assert!(!observer_cache.has_key_locks());
+        assert!(listener_cache.has_key_locks());
+    }
+
+    #[tokio::test]
+    async fn recover_from_panicking_post_removal_observer() {
+        #[cfg(feature = "logging")]
+        let _ = env_logger::builder().is_test(true).try_init();
+
+        let call_count = Arc::new(AtomicU32::new(0));
+        let observed = Arc::clone(&call_count);
+        let cache = Cache::builder()
+            .name("My Future Cache")
+            .post_removal_observer(move |_key, _value, _cause| {
+                observed.fetch_add(1, Ordering::AcqRel);
+                panic!("Panic now!");
+            })
+            .build();
+
+        cache.insert("alice", "a0").await;
+        cache.insert("alice", "a1").await;
+        cache.insert("alice", "a2").await;
+        cache.invalidate(&"alice").await;
+        cache.run_pending_tasks().await;
+
+        assert_eq!(call_count.load(Ordering::Acquire), 1);
+        assert!(!cache.contains_key(&"alice"));
     }
 
     #[tokio::test]
