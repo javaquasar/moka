@@ -29,3 +29,8 @@ cargo update -p parking_lot_core --precise 0.9.11
 cargo update -p lock_api --precise 0.4.13
 cargo update -p async-lock --precise 3.4.1
 cargo update -p uuid --precise 1.20.0
+# These transitive dev dependencies moved to edition 2024 / newer Rust after
+# the original pin list was written. Keep the MSRV dependency graph parseable
+# and buildable by Rust 1.71.1.
+cargo update -p encoding_rs --precise 0.8.35
+cargo update -p actix-macros --precise 0.2.4
