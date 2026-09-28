@@ -1,4 +1,14 @@
-# Moka
+# Hydra Moka
+
+> [!IMPORTANT]
+> This package is **HydraCache's temporary, source-compatible fork** of Moka.
+> It exists so HydraCache releases can consume the synchronous
+> `future::Cache` post-removal observer while the API is reviewed upstream.
+> The fork is based on Moka `v0.12.15`, adds only the observer change from
+> commit [`352e53f`], and is not an official Moka release. Follow the upstream
+> design discussion in [moka-rs/moka#606] and the proposed implementation in
+> [moka-rs/moka#607]. New applications should prefer the official `moka` crate
+> unless they specifically need this observer contract.
 
 [![GitHub Actions][gh-actions-badge]][gh-actions]
 [![crates.io release][release-badge]][crate]
@@ -28,22 +38,25 @@ concurrency of retrievals and a high expected concurrency for updates.
 All caches perform a best-effort bounding of a hash map using an entry replacement
 algorithm to determine which entries to evict when the capacity is exceeded.
 
-[gh-actions-badge]: https://github.com/moka-rs/moka/workflows/CI/badge.svg
-[release-badge]: https://img.shields.io/crates/v/moka.svg
-[docs-badge]: https://docs.rs/moka/badge.svg
+[gh-actions-badge]: https://github.com/javaquasar/moka/workflows/CI/badge.svg?branch=release%2Fhydra-moka-0.12.15-hydra.1
+[release-badge]: https://img.shields.io/crates/v/hydra-moka.svg
+[docs-badge]: https://docs.rs/hydra-moka/badge.svg
 [deepwiki-badge]: https://deepwiki.com/badge.svg
-[deps-rs-badge]: https://deps.rs/repo/github/moka-rs/moka/status.svg
-[codecov-badge]: https://codecov.io/gh/moka-rs/moka/graph/badge.svg?token=7GYZNS7O67
-[license-badge]: https://img.shields.io/crates/l/moka.svg
+[deps-rs-badge]: https://deps.rs/crate/hydra-moka/0.12.15-hydra.1/status.svg
+[codecov-badge]: https://codecov.io/gh/javaquasar/moka/graph/badge.svg
+[license-badge]: https://img.shields.io/crates/l/hydra-moka.svg
 
-[gh-actions]: https://github.com/moka-rs/moka/actions?query=workflow%3ACI
-[crate]: https://crates.io/crates/moka
-[docs]: https://docs.rs/moka
+[gh-actions]: https://github.com/javaquasar/moka/actions?query=workflow%3ACI
+[crate]: https://crates.io/crates/hydra-moka
+[docs]: https://docs.rs/hydra-moka
 [deepwiki]: https://deepwiki.com/moka-rs/moka
-[deps-rs]: https://deps.rs/repo/github/moka-rs/moka
-[codecov]: https://codecov.io/gh/moka-rs/moka
+[deps-rs]: https://deps.rs/crate/hydra-moka/0.12.15-hydra.1
+[codecov]: https://codecov.io/gh/javaquasar/moka
 
 [caffeine-git]: https://github.com/ben-manes/caffeine
+[moka-rs/moka#606]: https://github.com/moka-rs/moka/discussions/606
+[moka-rs/moka#607]: https://github.com/moka-rs/moka/pull/607
+[`352e53f`]: https://github.com/javaquasar/moka/commit/352e53faa480c9997272b9c70798dd5b5c15d581
 
 
 ## Features
@@ -188,14 +201,22 @@ The following platforms are _not_ supported:
 
 ## Usage
 
-To add Moka to your dependencies, run `cargo add` as the followings:
+Install the package under the dependency name `moka` so existing imports remain
+source-compatible:
 
 ```console
 # To use the synchronous cache:
-cargo add moka --features sync
+cargo add hydra-moka@=0.12.15-hydra.1 --rename moka --features sync
 
 # To use the asynchronous cache:
-cargo add moka --features future
+cargo add hydra-moka@=0.12.15-hydra.1 --rename moka --features future
+```
+
+The equivalent manifest entry is:
+
+```toml
+[dependencies]
+moka = { package = "hydra-moka", version = "=0.12.15-hydra.1", features = ["future"] }
 ```
 
 If you want to use the cache under an async runtime such as `tokio` or `async-std`, you should specify the `future` feature. Otherwise, specify the `sync` feature.
@@ -306,7 +327,7 @@ Here is a similar program to the previous example, but using asynchronous cache 
 // Cargo.toml
 //
 // [dependencies]
-// moka = { version = "0.12", features = ["future"] }
+// moka = { package = "hydra-moka", version = "=0.12.15-hydra.1", features = ["future"] }
 // tokio = { version = "1", features = ["rt-multi-thread", "macros" ] }
 // futures-util = "0.3"
 

@@ -1,5 +1,14 @@
 # Moka Cache &mdash; Change Log
 
+## Version 0.12.15-hydra.1
+
+- Publish HydraCache's temporary fork under the `hydra-moka` package name while
+  preserving the `moka` Rust library name.
+- Add the synchronous `future::Cache` post-removal observer from commit
+  `352e53faa480c9997272b9c70798dd5b5c15d581`.
+- Record the exact Moka `v0.12.15` base and the upstream discussion and pull
+  request. Consumers should return to official Moka after that API ships.
+
 > [!NOTE]
 > If you have any questions about Moka's APIs or internal design, you can ask the
 > AI chatbot at DeepWiki in a natural language:

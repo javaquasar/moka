@@ -1,14 +1,14 @@
 [package]
-name = "moka"
-version = "0.12.15"
+name = "hydra-moka"
+version = "0.12.15-hydra.1"
 edition = "2021"
 # Rust 1.71.1 was released on August 3, 2023.
 rust-version = "1.71.1"
-description = "A fast and concurrent cache library inspired by Java Caffeine"
+description = "HydraCache's temporary, source-compatible Moka fork with a synchronous post-removal observer"
 license = "(MIT OR Apache-2.0) AND Apache-2.0"
 # homepage = "https://"
-documentation = "https://docs.rs/moka/"
-repository = "https://github.com/moka-rs/moka"
+documentation = "https://docs.rs/hydra-moka/0.12.15-hydra.1/moka/"
+repository = "https://github.com/javaquasar/moka"
 keywords = ["cache", "concurrent"]
 categories = ["caching", "concurrency"]
 readme = "README.md"
@@ -26,6 +26,11 @@ exclude = [
     "MIGRATION-GUIDE.md",
     "tests/compile_tests/",
 ]
+
+[lib]
+# Preserve the upstream crate name so consumers can continue to use `moka::...`.
+name = "moka"
+path = "src/lib.rs"
 
 [features]
 default = []
@@ -129,6 +134,15 @@ unexpected_cfgs = { level = "warn", check-cfg = [
 # ```
 features = ["future", "sync"]
 rustdoc-args = ["--cfg", "docsrs"]
+
+[package.metadata.hydra-moka]
+upstream-package = "moka"
+upstream-version = "0.12.15"
+upstream-revision = "616473ee923f4cd1429b3d8eb3be7df3eb9906b1"
+observer-revision = "352e53faa480c9997272b9c70798dd5b5c15d581"
+upstream-discussion = "https://github.com/moka-rs/moka/discussions/606"
+upstream-pull-request = "https://github.com/moka-rs/moka/pull/607"
+return-policy = "Replace this package with an official moka release containing the observer API; do not silently move this version."
 
 # Examples
 
